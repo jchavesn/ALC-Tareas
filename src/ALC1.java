@@ -113,6 +113,8 @@ public class ALC1 {
 	private JButton btnNuevaMatriz;
 	private JComboBox cmbColumnas;
 	private JComboBox cmbFilas;
+	private JTextArea txtArea1;
+	private int actual=0; //0intercambio, 1multi, 2suma
 	
 	private resultados misresultados = new resultados();
 	
@@ -395,17 +397,20 @@ public class ALC1 {
 			
 			if (rdbtnIntercambiarFilas.isSelected()){
 			lblErrorMessage.setText("Intercambiar Columnas");
-			intercambiarFilas();
+			intercambiarFilas(true);
+			actual =0;
 			
 			}else{
 				if (rdbtnMultiplicarUnaFila.isSelected()){
 					lblErrorMessage.setText("Multiplicar una fila por un escalar");
-					multiplicarEscalar();
+					multiplicarEscalar(true);
+					actual =1;
 					
 				}else{
 					if(rdbtnSumarUnaFila.isSelected()){
 						lblErrorMessage.setText("Sumar una fila con un múltiplo de otra");
-						sumarFilas();
+						sumarFilas(true);
+						actual =2;
 						}
 				}
 			}
@@ -426,6 +431,19 @@ public class ALC1 {
 			public void actionPerformed(ActionEvent e) {
 			//misresultados.setVisible(true);
 				lblErrorMessage.setText("Deshacer");
+				if (actual==0){
+					lblErrorMessage.setText("Deshacer intercambio");
+					intercambiarFilas(false);
+				}else {
+					if (actual==1){
+						lblErrorMessage.setText("Deshacer multiplicacion");
+						multiplicarEscalar(false);
+					}else {
+						lblErrorMessage.setText("Deshacer suma");
+						sumarFilas(false);
+					}
+				}
+				btnDeshacer.setEnabled(false);
 			}
 		});
 		btnDeshacer.setEnabled(false);
@@ -897,14 +915,14 @@ public class ALC1 {
 				
 				//?
 				
-				
+				//txtArea1.setText("Matriz");
 				cargarMatrix();
 				lblErrorMessage.setText("Datos cargados, realice las operaciones");
 				leerlaMatriz();
 			//btnIngresarDatos.setEnabled(false);
 			btnDatos.setEnabled(false);
 			activarOperaciones();
-
+			desplegarMatriz();
 
 			//************************************************************************************
 			
@@ -924,7 +942,7 @@ public class ALC1 {
 		separator_29.setBounds(544, 70, 6, 340);
 		frmAlctarea.getContentPane().add(separator_29);
 		
-		JTextArea txtArea1 = new JTextArea();
+		txtArea1 = new JTextArea();
 		txtArea1.setBounds(10, 6, 1081, 20779);
 		frmAlctarea.getContentPane().add(txtArea1);
 		
@@ -1696,6 +1714,7 @@ public class ALC1 {
 			for (int j=0; j<laMatriz[0].length;j++){
 			  laMatriz[i][j]= valorCelda(i,j);
 			  System.out.println("matriz "+laMatriz[i][j]);
+			  //txtArea1.append(""+laMatriz[i][j]);
 		
 			}	
 		}	
@@ -1721,20 +1740,29 @@ public class ALC1 {
 	//OPERACIONES ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	
 
-void sumarFilas(){
-try{	
+void sumarFilas(boolean ejecutar){
+try{
+	actual = 2;
 	System.out.println("Sumar filas");
 	int fila1 = Integer.parseInt(textField_7.getText());
 	int fila2 = Integer.parseInt(textField_5.getText());
 	int escalarNum = Integer.parseInt(textField_58.getText());
 	int escalarDen = Integer.parseInt(textField_59.getText());
 	Fraccion escalar = new Fraccion(escalarNum,escalarDen);
+	Fraccion escalarI = new Fraccion(escalarDen,escalarNum);
+	
+	if (ejecutar){
 	miMatriz.sumaFilaEscalarPorFila(escalar,fila1,fila2);
-	//Guargar
-	misresultados.agregarOperacion("Operacion de Sumar una fila con un múltiplo de otra fila");
-	misresultados.agregarOperacion(escalar.getFraccionString()+" x "+"F"+fila1 +"+"+"F"+fila2);
+	txtArea1.append("Operacion de Sumar una fila con un múltiplo de otra fila"+"\n");
+	txtArea1.append(escalar.getFraccionString()+" x "+"F"+fila1 +"+"+"F"+fila2+"\n");
 	desplegarMatriz();
-	//guardar
+
+	}else{
+		miMatriz.sumaFilaEscalarPorFila(escalar,fila1,-fila2);
+		txtArea1.append("Deshacer Sumar una fila con un múltiplo de otra fila"+"\n");
+		desplegarMatriz();
+	}	
+
 }catch(Exception e){
 	System.out.println(""+e.getMessage());
 	lblErrorMessage.setText("Error en los campos, intente de nuevo");
@@ -1743,18 +1771,27 @@ try{
 	
 }
 
-void multiplicarEscalar(){
-try{	
+void multiplicarEscalar(boolean ejecutar){
+try{
+	actual = 1;
 	System.out.println("Multiplicar por escalar ");
 	int fila1 = Integer.parseInt(textField_3.getText());
 	int escalarNum = Integer.parseInt(textField_2.getText());
 	int escalarDen = Integer.parseInt(textField_4.getText());
 	Fraccion escalar = new Fraccion(escalarNum,escalarDen);
+	Fraccion escalarI = new Fraccion(escalarDen,escalarNum);
+	
+	if (ejecutar){
 	miMatriz.multiplicarEscalarPorFila(fila1, escalar);
-	//Guargar
-	misresultados.agregarOperacion("Operacion de Multiplicacion de una fila por un escalar");
-	misresultados.agregarOperacion(escalar.getFraccionString()+" x "+"F"+fila1);
+	txtArea1.append("Operacion de Multiplicacion de una fila por un escalar"+"\n");
+	txtArea1.append(escalar.getFraccionString()+" x "+"F"+fila1+"\n");
 	desplegarMatriz();
+	}
+	else{
+		miMatriz.multiplicarEscalarPorFila(fila1, escalarI);
+		txtArea1.append("Deshacer Multiplicacion de una fila por un escalar"+"\n");
+		desplegarMatriz();
+	}
 	//guardar
 
 }catch(Exception e){
@@ -1766,16 +1803,22 @@ try{
 }//multiplicar
 
 
-void intercambiarFilas(){
+void intercambiarFilas(boolean ejecutar){
 try{	
 	System.out.println("intercambiar ");
+	actual = 0;
 	int fila1 = Integer.parseInt(textField.getText());
 	int fila2 = Integer.parseInt(textField_1.getText());
+	if (ejecutar){
 	miMatriz.intercambioDeFilas(fila1, fila2);
-	//Guargar
-	misresultados.agregarOperacion("Operacion de Intercambio de Filas");
-	misresultados.agregarOperacion("F"+fila1+"<-->"+"F"+fila2);
+	txtArea1.append("\n"+"Operacion de Intercambio de Filas"+"\n");
+	txtArea1.append("F"+fila1+"<-->"+"F"+fila2+"\n");	
 	desplegarMatriz();
+	}
+	else {	miMatriz.intercambioDeFilas(fila2, fila1);
+	txtArea1.append("\n"+"Deshacer Intercambio de Filas"+"\n");
+	desplegarMatriz();
+	}
 	//Guardar 
 }catch(Exception e){
 	lblErrorMessage.setText("Error en los campos, intente de nuevo");
@@ -1785,7 +1828,11 @@ try{
 	
 
 }//intercambiar
-	
+
+
+
+
+
 	//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	
 	void desplegarMatriz(){
@@ -1793,13 +1840,13 @@ try{
 		for (int i=0; i<miMatriz.getNumFilas();i++ ){
 			//misresultados.areaResultados.append( "[");
 			for (int j=0; j<miMatriz.getNumColumnas();j++){
-				misresultados.areaResultados.append( miMatriz.getCampo(i,j).getFraccionString());
-				misresultados.areaResultados.append("\t");
+				txtArea1.append( miMatriz.getCampo(i,j).getFraccionString());
+				txtArea1.append("\t");
 			}
 			//misresultados.areaResultados.append( "]");
-			misresultados.agregarlinea();
+			txtArea1.append("\n");
 		}	
-		misresultados.agregarlinea();
+		//txtArea1.append("\n");
 
 	}//desplegar
 }
